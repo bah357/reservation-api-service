@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: reservation-api-service
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    active: test
+server:
+  max-http-request-header-size: 20KB
+  forward-headers-strategy: native
+info:
+  app:
+    java:
+      version: ${java.version}
+management:
+  endpoint:
+    health:
+      show-components: always
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState
+    restart:
+      enabled: true
+    loggers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: 'health,info,prometheus,loggers'
+  metrics:
+    mongo:
+      command:
+        enabled: false
+      connectionpool:
+        enabled: false
+  info:
+    env:
+      enabled: true
+

@@ -1,0 +1,118 @@
+plugins {
+  id 'io.spring.dependency-management' version '1.1.2'
+  id 'org.springframework.boot' version '3.1.2'
+  id 'idea'
+  id 'java'
+  id 'java-library'
+  id 'checkstyle'
+  id 'pmd'
+  id 'jacoco'
+  id 'groovy'
+}
+
+allprojects {
+  group = 'com.reservation.api'
+  version = '0.0.1'
+  sourceCompatibility = JavaVersion.VERSION_17
+  repositories {
+    mavenCentral()
+    maven {
+      url './maven-repo'
+    }
+    gradlePluginPortal()
+    ivy {
+      url './ivy-repo'
+    }
+  }
+}
+
+ext {
+  set('springCloudVersion', "2022.0.4")
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+  }
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.springframework.cloud:spring-cloud-starter'
+  implementation 'org.projectlombok:lombok'
+  developmentOnly 'org.springframework.boot:spring-boot-devtools'
+  //developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+  implementation 'io.micrometer:micrometer-registry-prometheus'
+  annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+  annotationProcessor 'org.projectlombok:lombok'
+  testAnnotationProcessor 'org.projectlombok:lombok'
+
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation "org.spockframework:spock-core:2.4-M1-groovy-4.0"
+  testImplementation 'org.spockframework:spock-spring:2.4-M1-groovy-4.0'
+  testImplementation 'io.rest-assured:rest-assured:5.3.1'
+
+  testImplementation 'com.tngtech.archunit:archunit-junit5-api:1.0.1'
+  testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:1.0.1'
+
+  compileOnly 'org.jetbrains:annotations:23.0.0'
+}
+
+test {
+  testLogging.showStandardStreams = false
+  useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
+
+  finalizedBy jacocoTestReport
+}
+
+checkstyle {
+  toolVersion = "10.9.2"
+  ignoreFailures = false
+  maxWarnings = 0
+  maxErrors = 0
+  sourceSets = [sourceSets.main, sourceSets.test]
+  reportsDir = file("$project.buildDir/reports/checkstyle")
+}
+
+pmd {
+  toolVersion = "6.55.0"
+  ignoreFailures = false
+  sourceSets = [sourceSets.main, sourceSets.test]
+  reportsDir = file("$project.buildDir/reports/pmd")
+  ruleSets = ["java-basic", "java-braces"]
+}
+
+jacoco {
+  toolVersion = "0.8.9"
+}
+
+jacocoTestReport {
+  dependsOn test
+  reports {
+    xml.required = true
+    html.required = false
+    csv.required = false
+    xml.destination file("${buildDir}/reports/jacocoTestReport.xml")
+  }
+}
+
+bootRun {
+  def activeProfile = project.hasProperty('profile') ? project['profile'] : 'local'
+  systemProperty 'spring.profiles.active', activeProfile
+
+  if (project.hasProperty('args')) {
+    args = project['args'].split('\\s+' as Closure)
+  }
+}
+
+wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+  distributionUrl = 'https://services.gradle.org/distributions/gradle-8.2.1-bin.zip'
+  gradleVersion = '8.2.1'
+}
